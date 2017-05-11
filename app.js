@@ -132,6 +132,10 @@ var logMiddleware = function(req, res, next) {
 
 var app = express();
 
+app.get('/healthz', (req, res) => {
+  res.send('OK');
+});
+
 app.use(logMiddleware);
 app.use(tls);
 app.use(cookieParser(conf.sessionSecret));
