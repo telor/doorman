@@ -73,6 +73,11 @@ module.exports = {
       // User must be a member of this domain to successfully authenticate. If an array
       // is listed, user may authenticate as a member of ANY of the domains.
       requiredDomain: 'yourdomain.com'
-    }
+    },
+
+    ip: {
+      ranges: '102.1.5.2/24, 192.168.1.0/24, 106.1.180.84'
+    },
+
   }
 };

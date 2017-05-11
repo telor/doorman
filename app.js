@@ -9,6 +9,7 @@ var session = require('cookie-session');
 var cookieParser = require('cookie-parser');
 var flash = require('express-flash');
 var everyauth = require('everyauth');
+var ipRangeCheck = require('ip-range-check');
 var Proxy = require('./lib/proxy');
 var tls = require('./middlewares/tls');
 log = require('./lib/log');
@@ -31,6 +32,17 @@ if(conf.modules.password) {
 }
 
 function userCanAccess(req) {
+
+  var remoteAddresses = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress;
+  var remoteAddress = remoteAddresses.split(/\s*,\s*/g).shift();
+  var ipRanges = conf.modules && conf.modules.ip && conf.modules.ip.ranges ? conf.modules.ip.ranges.split(/\s*,\s*/g) : [];
+
+  console.log('IP Check', remoteAddress, ipRanges, ipRangeCheck(remoteAddress, ipRanges));
+
+  if (remoteAddress && ipRanges.length && ipRangeCheck(remoteAddress, ipRanges)) {
+    return true;
+  }
+
   var auth = req.session && req.session.auth;
   if(!auth) {
     log.info("User rejected because they haven't authenticated.");
