@@ -9,7 +9,7 @@ var session = require('cookie-session');
 var cookieParser = require('cookie-parser');
 var flash = require('express-flash');
 var everyauth = require('everyauth');
-var ipRangeCheck = require('ip-range-check');
+var ipaddr = require('ipaddr.js');
 var Proxy = require('./lib/proxy');
 var tls = require('./middlewares/tls');
 log = require('./lib/log');
@@ -33,19 +33,27 @@ if(conf.modules.password) {
 
 function userCanAccess(req) {
 
-  var remoteAddresses = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.connection.remoteAddress;
-  var remoteAddress = remoteAddresses.split(/\s*,\s*/g).shift();
+  var xForwardedFor = req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',')[0];
+  var remoteAddress = (xForwardedFor && ipaddr.parse(xForwardedFor)) || ipaddr.parse(req.connection.remoteAddress).toIPv4Address();
   var ipRanges = conf.modules && conf.modules.ip && conf.modules.ip.ranges ? conf.modules.ip.ranges.split(/\s*,\s*/g) : [];
+  var isAuthIP = ipRanges.map((ipRange) => {
+      return remoteAddress.match(ipaddr.parseCIDR(ipRange));
+    }).
+    reduce((previousValue, currentValue) => { 
+      return previousValue || currentValue;
+    }, false);
 
-  console.log('IP Check', remoteAddress, ipRanges, ipRangeCheck(remoteAddress, ipRanges));
+  log.info('IP Check' + ' ' +  remoteAddress + ' ' + ipRanges + ' ' + isAuthIP);
 
-  if (remoteAddress && ipRanges.length && ipRangeCheck(remoteAddress, ipRanges)) {
+
+  if (isAuthIP) {
+    req.username = remoteAddress.toString();
     return true;
   }
 
   var auth = req.session && req.session.auth;
   if(!auth) {
-    log.info("User rejected because they haven't authenticated.");
+    log.info("User rejected because they haven't authenticated with IP.");
     return false;
   }
 
