@@ -4,13 +4,11 @@ html(lang="en")
   head
     meta(name="viewport", content="width = device-width")
     title= ["Doorman ", pageTitle].join(" | ")
+    link(rel="stylesheet" href="/_doorman/css/fonts/frutiger-bold.css")
+    link(rel="stylesheet" href="/_doorman/css/fonts/frutiger-light.css")
     link(rel="stylesheet" href="/_doorman/css/main.css")
 
   body
-    #container
-      #title
-        #logo Doorman
-      #main
-        block content
-        #small-logo
-          img(src="/_doorman/images/logo.jpg")
+    #main
+      block content
+    script(src="/_doorman/js/form.js")
