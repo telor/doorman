@@ -33,22 +33,28 @@ if(conf.modules.password) {
 
 function userCanAccess(req) {
 
-  var xForwardedFor = req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',')[0];
-  var remoteAddress = (xForwardedFor && ipaddr.parse(xForwardedFor)) || ipaddr.parse(req.connection.remoteAddress).toIPv4Address();
-  var ipRanges = conf.modules && conf.modules.ip && conf.modules.ip.ranges ? conf.modules.ip.ranges.split(/\s*,\s*/g) : [];
-  var isAuthIP = ipRanges.map((ipRange) => {
-      return remoteAddress.match(ipaddr.parseCIDR(ipRange));
-    }).
-    reduce((previousValue, currentValue) => { 
-      return previousValue || currentValue;
-    }, false);
+  // Wrapped into try/catch to prevent exceptions like "Error: ipaddr: the address has neither IPv6 nor IPv4 format" to break the process
+  try {
 
-  log.info('IP Check' + ' ' +  remoteAddress + ' ' + ipRanges + ' ' + isAuthIP);
+    var xForwardedFor = req.headers['x-forwarded-for'] && req.headers['x-forwarded-for'].split(',')[0];
+    var remoteAddress = (xForwardedFor && ipaddr.parse(xForwardedFor)) || ipaddr.parse(req.connection.remoteAddress).toIPv4Address();
+    var ipRanges = conf.modules && conf.modules.ip && conf.modules.ip.ranges ? conf.modules.ip.ranges.split(/\s*,\s*/g) : [];
+    var isAuthIP = ipRanges.map((ipRange) => {
+        return remoteAddress.match(ipaddr.parseCIDR(ipRange));
+      }).
+      reduce((previousValue, currentValue) => {
+        return previousValue || currentValue;
+      }, false);
 
+    log.info('IP Check' + ' ' +  remoteAddress + ' ' + ipRanges + ' ' + isAuthIP);
 
-  if (isAuthIP) {
-    req.username = remoteAddress.toString();
-    return true;
+    if (isAuthIP) {
+      req.username = remoteAddress.toString();
+      return true;
+    }
+
+  } catch (e) {
+    log.info('IP Check Exception', e);
   }
 
   var auth = req.session && req.session.auth;
