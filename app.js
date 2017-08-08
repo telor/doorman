@@ -54,7 +54,7 @@ function userCanAccess(req) {
     }
 
   } catch (e) {
-    log.info('IP Check Exception', e);
+    log.info('IP Check Exception: ' + e.message);
   }
 
   var auth = req.session && req.session.auth;
