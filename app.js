@@ -33,6 +33,8 @@ if(conf.modules.password) {
 
 function userCanAccess(req) {
 
+  log.info('IP Check: X-Forwarded-For = ' + req.headers['x-forwarded-for'] + ' / Remote Address = ' + req.connection.remoteAddress);
+
   // Wrapped into try/catch to prevent exceptions like "Error: ipaddr: the address has neither IPv6 nor IPv4 format" to break the process
   try {
 
@@ -46,7 +48,7 @@ function userCanAccess(req) {
         return previousValue || currentValue;
       }, false);
 
-    log.info('IP Check' + ' ' +  remoteAddress + ' ' + ipRanges + ' ' + isAuthIP);
+    log.info('IP Validation: ' + remoteAddress + ' / ' + ipRanges + ' / ' + isAuthIP);
 
     if (isAuthIP) {
       req.username = remoteAddress.toString();
